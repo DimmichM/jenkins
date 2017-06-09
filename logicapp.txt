@@ -1,0 +1,31 @@
+{
+
+
+  "access": "Allow",
+
+
+  "description": "Applied to VMs: HktAzFtpDevSr1",
+
+
+  "destinationAddressPrefix": "*",
+
+
+  "destinationPortRange": "21",
+
+
+  "direction": "Inbound",
+
+
+  "priority": 2000,
+
+
+  "protocol": "Tcp",
+
+
+  "sourceAddressPrefix": "82.209.222.18/32",
+
+
+  "sourcePortRange": "*"
+
+
+}
