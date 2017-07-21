@@ -1,0 +1,136 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appServicePlanName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of hosting plan"
+      }
+    },
+    "Environment": {
+      "type": "string"
+    },
+    "workersCount": {
+      "type": "int",
+      "defaultValue": "1"
+    },
+    "workerSize": {
+      "type": "string",
+      "allowedValues": [
+        "0",
+        "1",
+        "2"
+      ],
+      "defaultValue": "0",
+      "metadata": {
+        "description": "Worker Size( 0=Small, 1=Medium, 2=Large )"
+      }
+    }
+  },
+  "variables": {
+    "Environment": "[parameters('Environment')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-04-01",
+      "name": "[parameters('appServicePlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "Environment": "[variables('Environment')]",
+        "Type": "AppSvcPlan",
+        "ET": "[concat(variables('Environment'),' AppSvcPlan')]"
+      },
+      "sku": {
+        "name": "S2",
+        "tier": "Standard",
+        "size": "S2",
+        "family": "S",
+        "capacity": "[parameters('workersCount')]"
+      },
+      "properties": {
+        "name": "[parameters('appServicePlanName')]",
+        "workerSize": "[parameters('workerSize')]"
+      }
+    },
+    {
+      "apiVersion": "2015-04-01",
+      "name": "[concat(parameters('appServicePlanName'), 'SO01')]",
+      "type": "Microsoft.Insights/autoscaleSettings",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+      ],
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "[concat('hidden-link:', resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName')))]": "Resource"
+      },
+      "properties": {
+        "profiles": [
+          {
+            "name": "Default",
+            "capacity": {
+              "minimum": "[parameters('workersCount')]",
+              "maximum": 3,
+              "default": "[parameters('workersCount')]"
+            },
+            "rules": [
+              {
+                "metricTrigger": {
+                  "metricName": "CpuPercentage",
+                  "metricNamespace": "",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT10M",
+                  "timeAggregation": "Average",
+                  "operator": "GreaterThan",
+                  "threshold": 70
+                },
+                "scaleAction": {
+                  "direction": "Increase",
+                  "type": "ChangeCount",
+                  "value": 1,
+                  "cooldown": "PT5M"
+                }
+              },
+              {
+                "metricTrigger": {
+                  "metricName": "CpuPercentage",
+                  "metricNamespace": "",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT10M",
+                  "timeAggregation": "Average",
+                  "operator": "LessThan",
+                  "threshold": 60
+                },
+                "scaleAction": {
+                  "direction": "Decrease",
+                  "type": "ChangeCount",
+                  "value": 1,
+                  "cooldown": "PT5M"
+                }
+              }
+            ]
+          }
+        ],
+        "enabled": true,
+        "name": "[concat(parameters('appServicePlanName'), 'SO01')]",
+        "targetResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+        "notifications": [
+          {
+            "operation": "Scale",
+            "email": {
+              "sendToSubscriptionAdministrator": false,
+              "sendToSubscriptionCoAdministrators": false,
+              "customEmails": []
+            },
+            "webhooks": []
+          }
+        ]
+      }
+    }
+  ]
+}

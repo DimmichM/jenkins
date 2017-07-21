@@ -1,0 +1,89 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "StorageAccType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ]
+    },
+    "Environment": {
+      "type": "string"
+    },
+    "DeployName": {
+      "maxLength": 7,
+      "minLength": 2,
+      "type": "string",
+      "defaultValue": "Svaps"
+    },
+    "ApiVersion": {
+      "type": "string",
+      "defaultValue": "2016-01-01"
+    }
+
+  },
+  "variables": {
+    "Environment": "[parameters('Environment')]",
+    "ArtStorageAccountName": "[toLower(concat(parameters('DeployName'), variables('Environment'),'Art','stor01'))]",
+    "DgnStorageAccountName": "[toLower(concat(parameters('DeployName'), variables('Environment'),'Dgn','stor01'))]"
+  },
+  "resources": [
+    {
+      "name": "[variables('ArtStorageAccountName')]", //SA For Artifacts
+      "type": "Microsoft.Storage/storageAccounts",
+      "kind": "BlobStorage",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[parameters('ApiVersion')]",
+      "dependsOn": [],
+      "tags": {
+        "environment": "[variables('Environment')]",
+        "Type": "SA",
+        "Stream": "ETL",
+        "ET": "[concat(variables('Environment'),' SA')]",
+        "SE": "[concat('ETL', variables('Environment'))]",
+        "ST": "ETL SA",
+        "SET": "[concat('ETL', variables('Environment'), ' SA')]"
+      },
+      "sku": {
+        "name": "[parameters('StorageAccType')]"
+      },
+      "properties": {
+        "accessTier": "Cool"
+      }
+    },
+    {
+      "name": "[variables('DgnStorageAccountName')]", //SA for diagnostic logs
+      "type": "Microsoft.Storage/storageAccounts",
+      "kind": "Storage",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[parameters('ApiVersion')]",
+      "dependsOn": [],
+      "tags": {
+        "environment": "[variables('Environment')]",
+        "Type": "SA",
+        "Stream": "ETL",
+        "ET": "[concat(variables('Environment'),' SA')]",
+        "SE": "[concat('ETL', variables('Environment'))]",
+        "ST": "ETL SA",
+        "SET": "[concat('ETL', variables('Environment'), ' SA')]"
+      },
+      "sku": {
+        "name": "[parameters('StorageAccType')]"
+      },
+      "properties": {
+      }
+    }
+  ],
+  "outputs": {
+    "StorageAccountName": {
+      "type": "string",
+      "value": "[variables('ArtStorageAccountName')]"
+    }
+  }
+}

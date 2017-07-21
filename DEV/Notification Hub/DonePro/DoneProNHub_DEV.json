@@ -1,0 +1,81 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "DeployName": {
+      "maxLength": 7,
+      "minLength": 2,
+      "type": "string",
+      "defaultValue": "Svaps"
+    },
+    "Environment": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "apiVersion": "[providers('Microsoft.NotificationHubs', 'namespaces').apiVersions[0]]",
+    "Environment": "[parameters('Environment')]",
+    "TStream": "DonePro",
+    "VMStream": "NHub",
+    "RGStream": "[concat(variables('Environment'),variables('TStream'))]",
+    "Stream": "[concat(variables('RGStream'),variables('VMStream'))]",
+    "NHubNameSpace": "[concat(parameters('DeployName'), variables('Environment'), variables('VMStream'), 'NameSpace','01')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "name": "[variables('NHubNameSpace')]",
+      "type": "Microsoft.NotificationHubs/namespaces",
+      "tags": {
+        "Environment": "[variables('Environment')]",
+        "Type": "WebApp",
+        "Stream": "[variables('TStream')]",
+        "ET": "[concat(variables('Environment'),' NHub')]",
+        "SE": "[concat(variables('TStream'),' ',variables('Environment'))]",
+        "ST": "[concat(variables('TStream'),' NHub')]",
+        "SET": "[concat(variables('TStream'),' ',variables('Environment'),' NHub')]"
+      },
+      "location": "[resourceGroup().location]",
+      "kind": "NotificationHub",
+      "resources": [
+        {
+          "name": "[concat(variables('NHubNameSpace'), '/', parameters('DeployName'), variables('Environment'),'DoneProExecutor', variables('VMStream'),'01')]",
+          "apiVersion": "[variables('apiVersion')]",
+          "type": "Microsoft.NotificationHubs/namespaces/notificationHubs",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[variables('NHubNameSpace')]"
+          ]
+        },
+        {
+          "name": "[concat(variables('NHubNameSpace'), '/', parameters('DeployName'), variables('Environment'),'DoneProCustomer', variables('VMStream'),'01')]",
+          "apiVersion": "[variables('apiVersion')]",
+          "type": "Microsoft.NotificationHubs/namespaces/notificationHubs",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[variables('NHubNameSpace')]"
+          ]
+        },
+        {
+          "name": "[concat(variables('NHubNameSpace'), '/', parameters('DeployName'), variables('Environment'),'VabraExecutor', variables('VMStream'),'01')]",
+          "apiVersion": "[variables('apiVersion')]",
+          "type": "Microsoft.NotificationHubs/namespaces/notificationHubs",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[variables('NHubNameSpace')]"
+          ]
+        },
+        {
+          "name": "[concat(variables('NHubNameSpace'), '/', parameters('DeployName'), variables('Environment'),'VabraCustomer', variables('VMStream'),'01')]",
+          "apiVersion": "[variables('apiVersion')]",
+          "type": "Microsoft.NotificationHubs/namespaces/notificationHubs",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[variables('NHubNameSpace')]"
+          ]
+        }
+      ]
+    }
+
+  ]
+}

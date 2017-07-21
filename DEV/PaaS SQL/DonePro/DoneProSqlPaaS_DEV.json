@@ -1,0 +1,135 @@
+﻿{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "DeployName": {
+      "maxLength": 7,
+      "minLength": 2,
+      "type": "string",
+      "defaultValue": "Svaps"
+    },
+    "Environment": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "metadata": {
+        "description": "The name of the administrator of the PaaS SQL Server"
+      },
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password for the administrator account of the PaaS SQL Server"
+      }
+    },
+    "ApiVersion": {
+      "type": "string",
+      "defaultValue": "2015-06-15"
+    },
+    "DBCollation": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": ""
+    },
+    "StorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage Account for storing Logs"
+      }
+    },
+    "EmailAddresses": {
+      "type": "string",
+      "metadata": {
+        "description": "Email addresses for Threat Detection"
+      }
+    }
+  },
+  "variables": {
+    "Environment": "[parameters('Environment')]",
+    "TStream": "DonePro",
+    "VMStream": "Sql",
+    "RGStream": "[concat(variables('Environment'),variables('TStream'))]",
+    "Stream": "[concat(variables('RGStream'),variables('VMStream'))]",
+    "SqlServerName": "[toLower(concat(parameters('DeployName'), variables('Stream'),'1'))]"
+  },
+  "resources": [
+    {
+      "name": "[toLower(variables('SqlServerName'))]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-04-01-preview",
+      "dependsOn": [],
+      "tags": {
+        "Environment": "[variables('Environment')]",
+        "Type": "PaaSSQL",
+        "Stream": "[variables('TStream')]",
+        "ET": "[concat(variables('Environment'),' PaaSSQL')]",
+        "SE": "[concat(variables('TStream'),' ',variables('Environment'))]",
+        "ST": "[concat(variables('TStream'),' PaaSSQL')]",
+        "SET": "[concat(variables('TStream'),' ',variables('Environment'),' PaaSSQL')]"
+      },
+      "properties": {
+        "version": "12.0",
+        "administratorLogin": "[parameters('adminUsername')]",
+        "administratorLoginPassword": "[parameters('adminPassword')]"
+      },
+      "resources": [
+        {
+          "name": "AllowAllWindowsAzureIps",
+          "type": "firewallRules",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', variables('SqlServerName'))]"
+          ],
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          }
+        },
+        {
+          "name": "[toLower(concat('donepro', '-', variables('Environment'),' DB'))]",
+          "comments": "CRM Export IFAENA048-123",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', variables('SqlServerName'))]"
+          ],
+          "tags": {
+            "Environment": "[variables('Environment')]",
+            "Type": "DB",
+            "Stream": "[variables('TStream')]",
+            "ET": "[concat(variables('Environment'),' DB')]",
+            "SE": "[concat(variables('TStream'),' ',variables('Environment'))]",
+            "ST": "[concat(variables('TStream'),' DB')]",
+            "SET": "[concat(variables('TStream'),' ',variables('Environment'),' DB')]"
+          },
+          "properties": {
+            "collation": "[parameters('DBCollation')]",
+            "edition": "Basic",
+            "maxSizeBytes": "2147483648",
+            "requestedServiceObjectiveName": "Basic"
+          },
+          "resources": [
+            {
+              "name": "current",
+              "type": "transparentDataEncryption",
+              "dependsOn": [
+                "[toLower(concat('donepro', '-', variables('Environment'),' DB'))]"
+              ],
+              "location": null,
+              "apiVersion": "2014-04-01",
+              "properties": {
+                "status": "Enabled"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "outputs": {
+  }
+}
