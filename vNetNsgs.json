@@ -1,0 +1,126 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 4  //Maximum number of characters which can be used
+    }
+  },
+  "variables": {
+    "env": "[replace(parameters('environment'),first(parameters('environment')),toUpper(first(parameters('environment'))))]",
+    "AppGwSubnetNsgName":"[concat('nsg-',variables('env'),'AppGwSubNet')]",
+    "FrontSubnetNsgName":"[concat('nsg-',variables('env'),'FrontSubNet')]",
+    "BackSubnetNsgName":"[concat('nsg-',variables('env'),'BackSubNet')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2017-06-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('AppGwSubnetNsgName')]",
+      "dependsOn": [],
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "Project": "Contoso",
+        "Environment": "[variables('env')]",
+        "ServiceModel": "IaaS" 
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Allow_In_TCP.443_EPAM_Minsk-AppGwSubNet-1",
+            "properties": {
+              "description": "[concat('Applied to Subnet:',' AppGwSubNet')]",
+              "direction": "Inbound",
+              "priority": 3000,
+              "sourceAddressPrefixes": [
+                "213.184.243.0/24",
+                "217.21.56.0/24",
+                "217.21.63.0/24",
+                "213.184.231.0/24",
+                "86.57.255.88/29",
+                "194.158.197.0/29"
+              ],
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRanges": [
+                "443"
+              ],
+              "protocol": "Tcp",
+              "access": "Allow"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-06-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('FrontSubnetNsgName')]",
+      "dependsOn": [],
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "Project": "Contoso",
+        "Environment": "[variables('env')]",
+        "ServiceModel": "IaaS" 
+      },
+      "properties": {
+        "securityRules":  [
+          {
+            "name": "Allow_In_TCP.3389_EPAM_Minsk-AppGwSubNet-1",
+            "properties": {
+              "description": "[concat('Applied to Subnet:',' AppGwSubNet')]",
+              "direction": "Inbound",
+              "priority": 3000,
+              "sourceAddressPrefixes": [
+                "213.184.243.0/24",
+                "217.21.56.0/24",
+                "217.21.63.0/24",
+                "213.184.231.0/24",
+                "86.57.255.88/29",
+                "194.158.197.0/29"
+              ],
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "destinationPortRanges": [
+                "3389"
+              ],
+              "protocol": "Tcp",
+              "access": "Allow"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2017-06-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('BackSubnetNsgName')]",
+      "dependsOn": [],
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "Project": "Contoso",
+        "Environment": "[variables('env')]",
+        "ServiceModel": "IaaS" 
+      },
+      "properties": {
+        "securityRules": []
+      }
+    }
+  ],
+  "outputs": {
+    "AppGwSubnetNsgResourceID": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('AppGwSubnetNsgName'))]"
+    },
+    "FrontSubnetNsgResourceID": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('FrontSubnetNsgName'))]"
+    },
+    "BackSubnetNsgResourceID": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('BackSubnetNsgName'))]"
+    }
+  }
+}
